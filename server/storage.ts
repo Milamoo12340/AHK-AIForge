@@ -1,38 +1,60 @@
-import { type User, type InsertUser } from "@shared/schema";
 import { randomUUID } from "crypto";
 
-// modify the interface with any CRUD methods
-// you might need
+// Script storage interface
+export interface ScriptRecord {
+  id: number;
+  title: string;
+  description: string | null;
+  version: string;
+  code: string;
+  prompt: string;
+  isFavorite: boolean;
+  tags: string[] | null;
+  createdAt: Date;
+}
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  listScripts(): Promise<ScriptRecord[]>;
+  getScript(id: number): Promise<ScriptRecord | undefined>;
+  createScript(script: Omit<ScriptRecord, "id" | "createdAt">): Promise<ScriptRecord>;
+  updateScript(id: number, updates: Partial<ScriptRecord>): Promise<ScriptRecord | undefined>;
+  deleteScript(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<string, User>;
+  private scripts: Map<number, ScriptRecord> = new Map();
+  private nextId = 1;
 
-  constructor() {
-    this.users = new Map();
+  async listScripts(): Promise<ScriptRecord[]> {
+    return Array.from(this.scripts.values()).sort((a, b) => b.id - a.id);
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getScript(id: number): Promise<ScriptRecord | undefined> {
+    return this.scripts.get(id);
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async createScript(data: Omit<ScriptRecord, "id" | "createdAt">): Promise<ScriptRecord> {
+    const script: ScriptRecord = {
+      ...data,
+      id: this.nextId++,
+      createdAt: new Date(),
+    };
+    this.scripts.set(script.id, script);
+    return script;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async updateScript(id: number, updates: Partial<ScriptRecord>): Promise<ScriptRecord | undefined> {
+    const existing = this.scripts.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...updates };
+    this.scripts.set(id, updated);
+    return updated;
+  }
+
+  async deleteScript(id: number): Promise<boolean> {
+    return this.scripts.delete(id);
   }
 }
 
 export const storage = new MemStorage();
+
