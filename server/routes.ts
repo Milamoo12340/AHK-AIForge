@@ -69,15 +69,25 @@ export async function registerRoutes(
       return res.status(400).json({ message: "Prompt is required" });
     }
 
-    const openaiKey = apiKey?.trim() || process.env.OPENAI_API_KEY;
-    if (!openaiKey) {
+    const userKey = apiKey?.trim();
+    const replitKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+    const replitBaseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+    const envKey = process.env.OPENAI_API_KEY;
+
+    let client: OpenAI;
+    if (userKey) {
+      client = new OpenAI({ apiKey: userKey });
+    } else if (replitKey && replitBaseUrl) {
+      client = new OpenAI({ apiKey: replitKey, baseURL: replitBaseUrl });
+    } else if (envKey) {
+      client = new OpenAI({ apiKey: envKey });
+    } else {
       return res.status(500).json({
-        message: "No OpenAI key configured. Add OPENAI_API_KEY to your environment variables, or provide your own key in Advanced settings.",
+        message: "No OpenAI key configured. Provide your own key in Advanced settings.",
       });
     }
 
     try {
-      const client = new OpenAI({ apiKey: openaiKey });
 
       const completion = await client.chat.completions.create({
         model: "gpt-4o",
