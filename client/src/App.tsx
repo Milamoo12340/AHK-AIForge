@@ -1,21 +1,20 @@
 import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { Navigation, MobileNav } from "@/components/Navigation";
-import NotFound from "@/pages/not-found";
+import { Navigation } from "@/components/Navigation";
 import Generator from "@/pages/Generator";
 import Library from "@/pages/Library";
 import Recorder from "@/pages/Recorder";
 import Settings from "@/pages/Settings";
+import NotFound from "@/pages/not-found";
 
-function Router() {
+export default function App() {
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
-      <Navigation />
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+    <QueryClientProvider client={queryClient}>
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <Navigation />
+        <main className="flex-1">
           <Switch>
             <Route path="/" component={Generator} />
             <Route path="/library" component={Library} />
@@ -25,20 +24,7 @@ function Router() {
           </Switch>
         </main>
       </div>
-      <MobileNav />
-    </div>
-  );
-}
-
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Router />
-        <Toaster />
-      </TooltipProvider>
+      <Toaster />
     </QueryClientProvider>
   );
 }
-
-export default App;
